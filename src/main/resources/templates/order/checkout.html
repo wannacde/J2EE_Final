@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout – Bookstore</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7efe6; --surface: #fffaf4; --line: #e3d2be;
+            --text: #2f261d; --muted: #706253; --accent: #87563a; --accent-2: #40614f;
+        }
+        body { font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--text); }
+        .container { width: min(1000px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 48px; }
+
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 600; font-size: 0.95rem; text-decoration: none; margin-bottom: 22px; }
+        .back-link:hover { text-decoration: underline; }
+
+        .checkout-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 22px; align-items: start; }
+
+        .card {
+            background: var(--surface); border-radius: 22px; border: 1px solid var(--line);
+            box-shadow: 0 6px 24px rgba(70,44,25,0.08); padding: 30px 28px;
+        }
+        .card h1 { font-size: 1.6rem; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+        .card h2 { font-size: 1.3rem; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+
+        .form-row { margin-bottom: 20px; }
+        .form-row label { display: block; font-weight: 600; color: var(--muted); margin-bottom: 7px; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.4px; }
+        .form-row input, .form-row textarea {
+            width: 100%; padding: 12px 14px; border-radius: 12px;
+            border: 1.5px solid var(--line); background: #fffdf9; color: var(--text);
+            font-size: 0.97rem; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-row input:focus, .form-row textarea:focus {
+            outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(135,86,58,0.1);
+        }
+        .form-row textarea { resize: vertical; min-height: 100px; }
+        .error { color: #b91c1c; font-size: 0.85rem; margin-top: 5px; }
+
+        /* Discount */
+        .discount-row { display: flex; gap: 8px; margin-bottom: 20px; }
+        .discount-row input { flex: 1; padding: 11px 14px; border-radius: 10px; border: 1.5px solid var(--line); background: #fffdf9; font-size: 0.95rem; font-family: inherit; }
+        .discount-row input:focus { outline: none; border-color: var(--accent); }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 11px 22px; border-radius: 12px; font-size: 0.97rem; font-weight: 600; cursor: pointer; border: 1.5px solid transparent; font-family: inherit; transition: all 0.18s; text-decoration: none; }
+        .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-primary:hover { background: #9a6344; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(135,86,58,0.3); }
+        .btn-green { background: var(--accent-2); color: #fff; border-color: var(--accent-2); }
+        .btn-green:hover { background: #4e7a62; transform: translateY(-1px); }
+        .btn-ghost { background: #fff; color: var(--text); border-color: var(--line); }
+        .btn-ghost:hover { background: #f3e5d5; border-color: #c9a882; }
+        .btn-full { width: 100%; margin-top: 10px; padding: 14px; font-size: 1.05rem; border-radius: 14px; }
+
+        /* Summary */
+        .summary-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #f0e4d4; gap: 10px; }
+        .summary-item:last-of-type { border-bottom: none; }
+        .summary-item .item-name { font-size: 0.95rem; color: var(--text); }
+        .summary-item .item-qty { font-size: 0.85rem; color: var(--muted); }
+        .summary-item .item-price { font-weight: 600; color: var(--accent); white-space: nowrap; font-size: 0.95rem; }
+        .summary-divider { border: none; border-top: 2px solid var(--line); margin: 14px 0; }
+        .summary-total { display: flex; justify-content: space-between; align-items: center; }
+        .summary-total .label { font-size: 1.05rem; font-weight: 700; }
+        .summary-total .amount { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+        .discount-applied { background: #edf5f0; border: 1px solid #b6dfc8; border-radius: 10px; padding: 10px 14px; margin: 12px 0; color: var(--accent-2); font-size: 0.93rem; font-weight: 600; }
+
+        .summary-card { position: sticky; top: 80px; }
+
+        @media (max-width: 860px) {
+            .checkout-grid { grid-template-columns: 1fr; }
+            .summary-card { position: static; }
+        }
+        @media (max-width: 600px) {
+            .card { padding: 20px 16px; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <a class="back-link" th:href="@{/cart}">← Back to Cart</a>
+
+    <div class="checkout-grid">
+        <!-- Checkout Form -->
+        <div class="card">
+            <h1>📦 Checkout Details</h1>
+            <form id="checkoutPostForm" th:action="@{/orders/checkout}" th:object="${checkoutForm}" method="post">
+                <div class="form-row">
+                    <label>Recipient Name</label>
+                    <input type="text" th:field="*{customerName}" required placeholder="Full name of recipient">
+                    <div class="error" th:if="${#fields.hasErrors('customerName')}" th:errors="*{customerName}"></div>
+                </div>
+                <div class="form-row">
+                    <label>Phone Number</label>
+                    <input type="tel" th:field="*{phoneNumber}" required placeholder="e.g. 0901234567">
+                    <div class="error" th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}"></div>
+                </div>
+                <div class="form-row">
+                    <label>Shipping Address</label>
+                    <textarea th:field="*{address}" required placeholder="Full shipping address..."></textarea>
+                    <div class="error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></div>
+                </div>
+
+                <!-- Discount Code -->
+                <div class="form-row">
+                    <label>Discount Code (optional)</label>
+                    <div class="discount-row">
+                        <input type="text" th:field="*{discountCode}" placeholder="Enter code...">
+                        <button type="button" class="btn btn-ghost" onclick="applyDiscount()">Apply</button>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-green btn-full" onclick="showReview()">Review Order →</button>
+            </form>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="card summary-card">
+            <h2>🧾 Order Summary</h2>
+            <div th:if="${#lists.isEmpty(cart.items)}" style="color:var(--muted); text-align:center; padding:20px 0;">
+                Your cart is empty.
+            </div>
+            <div th:if="${!#lists.isEmpty(cart.items)}">
+                <div th:each="item : ${cart.items}"
+                     th:if="${selectedItems == null or selectedItems.containsKey(item.bookId)}"
+                     class="summary-item">
+                    <div>
+                        <div class="item-name" th:text="${item.title}"></div>
+                        <div class="item-qty" th:text="'× ' + (${selectedItems != null} ? ${selectedItems.get(item.bookId)} : ${item.quantity})"></div>
+                    </div>
+                    <div class="item-price"
+                         th:text="${#numbers.formatDecimal(item.price * (selectedItems != null ? selectedItems.get(item.bookId) : item.quantity),0,'COMMA',0,'POINT')} + ' ₫'"></div>
+                    <!-- Hidden inputs để gửi selectedItems khi POST -->
+                    <input type="hidden"
+                           th:name="'selectedItems[' + ${item.bookId} + ']'"
+                           th:value="${selectedItems != null ? selectedItems.get(item.bookId) : item.quantity}"
+                           form="checkoutPostForm">
+                </div>
+                <hr class="summary-divider">
+                <div class="summary-total">
+                    <span class="label">Total</span>
+                    <span class="amount" id="checkoutTotal">0 ₫</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function applyDiscount() {
+    const code = document.querySelector('input[name="discountCode"]').value.trim();
+    if (!code) { alert('Please enter a discount code.'); return; }
+    alert('Discount code will be applied on order submission.');
+}
+// Tính tổng tiền từ các hidden inputs
+(function() {
+    let total = 0;
+    document.querySelectorAll('input[name^="selectedItems["]').forEach(input => {
+        const bookId = input.name.replace('selectedItems[','').replace(']','');
+        // Lấy giá từ item-price tương ứng
+    });
+    // Tính từ các item-price hiển thị
+    let sum = 0;
+    document.querySelectorAll('.item-price').forEach(el => {
+        const val = el.textContent.replace(/[^\d]/g, '');
+        sum += parseInt(val) || 0;
+    });
+    const totalEl = document.getElementById('checkoutTotal');
+    if (totalEl) totalEl.textContent = sum.toLocaleString('vi-VN') + ' ₫';
+})();
+</script>
+</body>
+<script>
+if (window.location.search.includes('stockError=1')) {
+    alert('Cannot checkout because some books are out of stock!');
+}
+</script>
+
+<!-- Review Modal -->
+<div id="reviewModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fffaf4; border-radius:20px; border:1px solid #e3d2be; box-shadow:0 8px 32px rgba(70,44,25,0.18); padding:32px 28px; width:min(520px, calc(100% - 32px)); max-height:85vh; overflow-y:auto;">
+        <h2 style="font-size:1.4rem; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid #e3d2be;">Review Your Order</h2>
+
+        <div style="margin-bottom:16px;">
+            <div style="font-size:0.8rem; font-weight:700; color:#706253; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Recipient</div>
+            <div id="rev-name" style="font-weight:600;"></div>
+        </div>
+        <div style="margin-bottom:16px;">
+            <div style="font-size:0.8rem; font-weight:700; color:#706253; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Phone</div>
+            <div id="rev-phone" style="font-weight:600;"></div>
+        </div>
+        <div style="margin-bottom:16px;">
+            <div style="font-size:0.8rem; font-weight:700; color:#706253; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Shipping Address</div>
+            <div id="rev-address" style="font-weight:600;"></div>
+        </div>
+        <div style="margin-bottom:20px;">
+            <div style="font-size:0.8rem; font-weight:700; color:#706253; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">Items</div>
+            <div id="rev-items"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:14px; border-top:2px solid #e3d2be;">
+            <div style="font-size:1.1rem; font-weight:700; color:#87563a;">Total: <span id="rev-total"></span></div>
+            <div style="display:flex; gap:10px;">
+                <button type="button" onclick="closeReview()" style="padding:10px 20px; border-radius:10px; border:1.5px solid #e3d2be; background:#fff; font-family:inherit; font-size:0.95rem; cursor:pointer;">Edit</button>
+                <button type="button" onclick="document.getElementById('checkoutPostForm').submit()" style="padding:10px 22px; border-radius:10px; border:none; background:#40614f; color:#fff; font-family:inherit; font-size:0.95rem; font-weight:600; cursor:pointer;">Confirm &amp; Place Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showReview() {
+    const form = document.getElementById('checkoutPostForm');
+    const name = form.querySelector('[name="customerName"]').value.trim();
+    const phone = form.querySelector('[name="phoneNumber"]').value.trim();
+    const address = form.querySelector('[name="address"]').value.trim();
+    if (!name || !phone || !address) {
+        form.reportValidity();
+        return;
+    }
+    document.getElementById('rev-name').textContent = name;
+    document.getElementById('rev-phone').textContent = phone;
+    document.getElementById('rev-address').textContent = address;
+
+    // Build items list
+    let itemsHtml = '';
+    let total = 0;
+    document.querySelectorAll('.summary-item').forEach(item => {
+        const itemName = item.querySelector('.item-name')?.textContent || '';
+        const itemQty = item.querySelector('.item-qty')?.textContent || '';
+        const priceText = item.querySelector('.item-price')?.textContent || '0';
+        const price = parseInt(priceText.replace(/[^\d]/g, '')) || 0;
+        total += price;
+        itemsHtml += '<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f0e4d4;"><div><div style="font-weight:600;">' + itemName + '</div><div style="font-size:0.85rem; color:#706253;">' + itemQty + '</div></div><div style="font-weight:700; color:#87563a;">' + priceText + '</div></div>';
+    });
+    document.getElementById('rev-items').innerHTML = itemsHtml || '<div style="color:#706253;">No items</div>';
+    document.getElementById('rev-total').textContent = total.toLocaleString('vi-VN') + ' ₫';
+    document.getElementById('reviewModal').style.display = 'flex';
+}
+function closeReview() {
+    document.getElementById('reviewModal').style.display = 'none';
+}
+document.getElementById('reviewModal').addEventListener('click', function(e) {
+    if (e.target === this) closeReview();
+});
+</script>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile – Bookstore</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/bookstore-ui.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7efe6; --surface: #fffaf4; --line: #e3d2be;
+            --text: #2f261d; --muted: #706253; --accent: #87563a; --accent-2: #40614f;
+        }
+        body { font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--text); }
+        .container { width: min(700px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 48px; }
+
+        /* Profile Header */
+        .profile-header {
+            background: linear-gradient(135deg, var(--accent), #a06a4a);
+            border-radius: 22px; padding: 32px 28px; margin-bottom: 22px;
+            display: flex; align-items: center; gap: 24px; color: #fff;
+            box-shadow: 0 8px 28px rgba(135,86,58,0.25);
+        }
+        .avatar {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: rgba(255,255,255,0.25); border: 3px solid rgba(255,255,255,0.5);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.2rem; font-weight: 700; flex-shrink: 0;
+        }
+        .profile-name { font-size: 1.7rem; font-weight: 700; margin-bottom: 4px; }
+        .profile-role { font-size: 0.9rem; opacity: 0.85; background: rgba(255,255,255,0.2); display: inline-block; padding: 3px 12px; border-radius: 20px; }
+
+        /* Cards */
+        .card {
+            background: var(--surface); border-radius: 18px; border: 1px solid var(--line);
+            box-shadow: 0 4px 18px rgba(70,44,25,0.07); padding: 24px 26px; margin-bottom: 18px;
+        }
+        .card-title { font-size: 1rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+
+        .info-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0e4d4; gap: 14px; }
+        .info-row:last-child { border-bottom: none; }
+        .info-icon { font-size: 1.2rem; width: 28px; text-align: center; flex-shrink: 0; }
+        .info-label { font-size: 0.85rem; color: var(--muted); font-weight: 600; width: 120px; flex-shrink: 0; }
+        .info-value { font-size: 1rem; font-weight: 600; color: var(--text); }
+
+        /* Quick Links */
+        .quick-links { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .quick-link {
+            display: flex; align-items: center; gap: 12px; padding: 16px 18px;
+            background: #fff; border-radius: 14px; border: 1px solid var(--line);
+            text-decoration: none; color: var(--text); transition: all 0.18s;
+        }
+        .quick-link:hover { background: #f3e5d5; border-color: #c9a882; transform: translateY(-2px); box-shadow: 0 4px 14px rgba(70,44,25,0.1); }
+        .quick-link-icon { font-size: 1.5rem; }
+        .quick-link-text { font-weight: 600; font-size: 0.95rem; }
+        .quick-link-sub { font-size: 0.82rem; color: var(--muted); }
+
+        @media (max-width: 600px) {
+            .profile-header { flex-direction: column; text-align: center; }
+            .quick-links { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="avatar" th:text="${#strings.substring(username,0,1).toUpperCase()}">U</div>
+        <div>
+            <div class="profile-name" th:text="${username}">Username</div>
+            <span class="profile-role"><i class="fa-solid fa-book icon" style="color:#332020;"></i> Bookstore Member</span>
+                    <!-- profile-role removed for cleaner UI -->
+        </div>
+    </div>
+
+    <!-- Account Info -->
+    <div class="card">
+        <div class="card-title"><i class="fa-solid fa-user icon"></i> Account Information</div>
+        <div class="info-row">
+            <span class="info-icon"><i class="fa-solid fa-id-badge icon"></i></span>
+            <span class="info-label">Username</span>
+            <span class="info-value" th:text="${username}"></span>
+        </div>
+        <div class="info-row" th:if="${email != null}">
+            <span class="info-icon"><i class="fa-solid fa-envelope icon"></i></span>
+            <span class="info-label">Email</span>
+            <span class="info-value" th:text="${email}"></span>
+        </div>
+        <div class="info-row" th:if="${fullName != null}">
+            <span class="info-icon"><i class="fa-solid fa-user icon"></i></span>
+            <span class="info-label">Full Name</span>
+            <span class="info-value" th:text="${fullName}"></span>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="card">
+        <div class="card-title"><i class="fa-solid fa-link icon"></i> Quick Links</div>
+        <div class="quick-links">
+            <a class="quick-link" th:href="@{/orders}">
+                <span class="quick-link-icon"><i class="fa-solid fa-box icon"></i></span>
+                <div>
+                    <div class="quick-link-text">My Orders</div>
+                    <div class="quick-link-sub">Track your orders</div>
+                </div>
+            </a>
+            <a class="quick-link" th:href="@{/wishlist}">
+                <span class="quick-link-icon"><i class="fa-solid fa-book icon"></i></span>
+                <div>
+                    <div class="quick-link-text">Wishlist</div>
+                    <div class="quick-link-sub">Saved books</div>
+                </div>
+            </a>
+            <a class="quick-link" th:href="@{/cart}">
+                <span class="quick-link-icon"><i class="fa-solid fa-cart-shopping icon"></i></span>
+                <div>
+                    <div class="quick-link-text">Shopping Cart</div>
+                    <div class="quick-link-sub">View your cart</div>
+                </div>
+            </a>
+            <a class="quick-link" th:href="@{/books}">
+                <span class="quick-link-icon"><i class="fa-regular fa-compass icon" style="color:#332020;"></i></span>
+                <div>
+                    <div class="quick-link-text">Browse Books</div>
+                    <div class="quick-link-sub">Explore our catalog</div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

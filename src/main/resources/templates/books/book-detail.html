@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${book.title} + ' – Bookstore'"></title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7efe6; --surface: #fffaf3; --line: #e2d2be;
+            --text: #2f261d; --muted: #6f6254; --accent: #87563a; --accent-2: #3f614f;
+        }
+        body { font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--text); }
+        .container { width: min(780px, 96vw); margin: 0 auto; padding: 28px 0 48px; }
+        .card {
+            background: var(--surface); border-radius: 22px; border: 1px solid var(--line);
+            box-shadow: 0 6px 28px rgba(71,49,16,0.09); padding: 32px 30px; margin-bottom: 22px;
+        }
+
+        /* Book Header */
+        .book-header { display: flex; gap: 30px; align-items: flex-start; }
+        .book-img-wrap { flex-shrink: 0; }
+        .book-img {
+            width: 190px; height: 270px; object-fit: cover; border-radius: 16px;
+            box-shadow: 0 8px 28px rgba(71,49,16,0.18); display: block;
+        }
+        .book-info { flex: 1; min-width: 0; }
+        .category-tag {
+            display: inline-block; padding: 4px 12px; border-radius: 20px;
+            background: #edf5f0; color: var(--accent-2); font-size: 0.8rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px;
+        }
+        .book-title { font-size: 1.9rem; font-weight: 700; line-height: 1.2; margin-bottom: 8px; }
+        .book-author { color: var(--muted); font-size: 1.05rem; margin-bottom: 14px; }
+        .book-desc { color: #3d3327; font-size: 0.97rem; line-height: 1.7; margin-bottom: 18px; }
+        .book-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+        .price { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+        .stock-badge {
+            padding: 5px 12px; border-radius: 20px; font-size: 0.88rem; font-weight: 600;
+            background: #edf5f0; color: var(--accent-2);
+        }
+        .stock-badge.low { background: #fef2f2; color: #b91c1c; }
+
+        /* Actions */
+        .book-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .cart-form { display: flex; gap: 8px; align-items: center; }
+        .qty-input {
+            width: 70px; padding: 10px 12px; border-radius: 10px;
+            border: 1.5px solid var(--line); background: #fffdf9; font-size: 1rem;
+            font-family: inherit; text-align: center;
+        }
+        .qty-input:focus { outline: none; border-color: var(--accent); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 12px; font-size: 0.97rem; font-weight: 600; cursor: pointer; border: 1.5px solid transparent; font-family: inherit; transition: all 0.18s; text-decoration: none; }
+        .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-primary:hover { background: #9a6344; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(135,86,58,0.3); }
+        .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--line); }
+        .btn-ghost:hover { background: #f3e5d5; border-color: #c9a882; }
+        .btn-wishlist { background: #fff0f0; color: #c0392b; border-color: #f5c6c6; }
+        .btn-wishlist:hover { background: #fde8e8; }
+
+        /* Reviews */
+        .section-title { font-size: 1.25rem; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .review-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+        .review-item {
+            background: #fff; border-radius: 14px; padding: 16px 18px;
+            border: 1px solid var(--line); box-shadow: 0 2px 8px rgba(71,49,16,0.05);
+        }
+        .review-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .review-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #a06a4a);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
+        }
+        .review-username { font-weight: 700; color: var(--accent-2); font-size: 0.97rem; }
+        .review-date { color: #aaa; font-size: 0.85rem; margin-left: auto; }
+        .review-comment { color: var(--text); font-size: 0.95rem; line-height: 1.6; }
+        .empty-reviews { text-align: center; padding: 24px; color: var(--muted); font-size: 0.97rem; }
+
+        /* Review Form */
+        .review-form-wrap { background: #fff; border-radius: 14px; padding: 20px 22px; border: 1px solid var(--line); }
+        .review-form-wrap label { display: block; font-weight: 600; color: var(--muted); margin-bottom: 6px; font-size: 0.9rem; }
+        .review-form-wrap textarea {
+            width: 100%; border-radius: 10px; border: 1.5px solid var(--line);
+            padding: 10px 12px; font-size: 0.97rem; font-family: inherit;
+            min-height: 80px; resize: vertical; background: #fffdf9; color: var(--text);
+            transition: border-color 0.2s;
+        }
+        .review-form-wrap textarea:focus { outline: none; border-color: var(--accent-2); }
+
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 600; font-size: 0.97rem; text-decoration: none; margin-top: 4px; }
+        .back-link:hover { text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            .card { padding: 18px 14px; }
+            .book-header { flex-direction: column; }
+            .book-img { width: 100%; height: 220px; }
+            .book-title { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <!-- Book Detail Card -->
+    <div class="card">
+        <div class="book-header">
+            <div class="book-img-wrap">
+                <img class="book-img" th:src="${book.imageUrl}" th:alt="${book.title}">
+            </div>
+            <div class="book-info">
+                <span class="category-tag" th:if="${book.category != null}" th:text="${book.category.name}"></span>
+                <div class="book-title" th:text="${book.title}"></div>
+                <div class="book-author">by <span th:text="${book.author}"></span></div>
+                <div class="book-desc" th:text="${book.description}"></div>
+                <div class="book-meta">
+                    <span class="price" th:text="${#numbers.formatDecimal(book.price,0,'COMMA',0,'POINT')} + ' ₫'"></span>
+                    <span class="stock-badge" th:classappend="${book.stock <= 5} ? ' low'"
+                          th:text="${book.stock <= 5} ? '⚠ Only ' + ${book.stock} + ' left' : '✓ In Stock (' + ${book.stock} + ')'"></span>
+                </div>
+                <div class="book-actions">
+                    <form class="cart-form" th:action="@{/cart/add}" method="post">
+                        <input type="hidden" name="bookId" th:value="${book.id}">
+                        <input type="hidden" name="redirectUrl" th:value="@{/books/{id}(id=${book.id})}">
+                        <input class="qty-input" type="number" name="quantity" value="1" min="1" th:max="${book.stock}">
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-cart-plus"></i> Add to Cart</button>
+                    </form>
+                    <form th:action="@{'/wishlist/add/' + ${book.id}}" method="post" sec:authorize="isAuthenticated()">
+                        <button type="submit" class="btn btn-wishlist"><i class="fa-regular fa-heart"></i> Wishlist</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews Card -->
+    <div class="card">
+        <div class="section-title">💬 Reviews
+            <span style="font-size:0.9rem; font-weight:400; color:var(--muted);" th:text="'(' + ${#lists.size(reviews)} + ')'"></span>
+        </div>
+
+        <div class="review-list" th:if="${!#lists.isEmpty(reviews)}">
+            <div class="review-item" th:each="review : ${reviews}">
+                <div class="review-header">
+                    <div class="review-avatar" th:text="${#strings.substring(review.username,0,1).toUpperCase()}"></div>
+                    <span class="review-username" th:text="${review.username}"></span>
+                    <span class="review-date" th:text="${#temporals.format(review.createdAt,'dd MMM yyyy, HH:mm')}"></span>
+                </div>
+                <div class="review-comment" th:text="${review.comment}"></div>
+            </div>
+        </div>
+
+        <div class="empty-reviews" th:if="${#lists.isEmpty(reviews)}">
+            📝 No reviews yet. Be the first to share your thoughts!
+        </div>
+
+        <div class="section-title" style="margin-top:20px;">✍ Write a Review</div>
+        <div class="review-form-wrap" sec:authorize="isAuthenticated()">
+            <form th:action="@{'/reviews/add/' + ${book.id}}" th:object="${newReview}" method="post">
+                <label>Your Comment</label>
+                <textarea th:field="*{comment}" required placeholder="Share your thoughts about this book..."></textarea>
+                <button type="submit" class="btn btn-primary" style="margin-top:12px;">Submit Review</button>
+            </form>
+        </div>
+        <div class="review-form-wrap" sec:authorize="!isAuthenticated()" style="text-align:center; color:var(--muted);">
+            <a th:href="@{/login}" class="btn btn-ghost">Login to write a review</a>
+        </div>
+    </div>
+
+    <a class="back-link" th:href="@{/books}">← Back to book list</a>
+</div>
+</body>
+</html>

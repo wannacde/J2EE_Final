@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Placed – Bookstore</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7efe6; --surface: #fffaf4; --line: #e3d2be;
+            --text: #2f261d; --muted: #706253; --accent: #87563a; --green: #22c55e;
+        }
+        body { font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--text); }
+        .container { width: min(560px, calc(100% - 32px)); margin: 0 auto; padding: 40px 0 60px; }
+
+        .success-card {
+            background: var(--surface); border-radius: 28px; border: 1px solid var(--line);
+            box-shadow: 0 12px 40px rgba(70,44,25,0.10); padding: 44px 36px; text-align: center;
+        }
+        .success-icon { font-size: 4.5rem; margin-bottom: 16px; animation: pop 0.4s ease; }
+        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        h1 { font-size: 1.9rem; color: var(--green); margin-bottom: 8px; }
+        .subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 28px; }
+
+        /* Order Info */
+        .order-info {
+            background: #fff; border-radius: 16px; border: 1px solid var(--line);
+            padding: 20px 22px; margin-bottom: 24px; text-align: left;
+        }
+        .order-info-title { font-size: 0.82rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0e4d4; font-size: 0.95rem; }
+        .info-row:last-child { border-bottom: none; }
+        .info-row .label { color: var(--muted); }
+        .info-row .value { font-weight: 600; color: var(--text); }
+        .info-row .value.total { font-size: 1.1rem; color: var(--accent); }
+
+        .badge-pending { display: inline-block; padding: 4px 12px; border-radius: 20px; background: #fef9c3; color: #854d0e; font-size: 0.82rem; font-weight: 700; }
+
+        /* Buttons */
+        .btn-group { display: flex; flex-direction: column; gap: 10px; }
+        .btn { display: flex; align-items: center; justify-content: center; padding: 13px 20px; border-radius: 14px; font-size: 1rem; font-weight: 600; cursor: pointer; border: 1.5px solid transparent; font-family: inherit; transition: all 0.18s; text-decoration: none; }
+        .btn-green { background: var(--green); color: #fff; border-color: var(--green); }
+        .btn-green:hover { background: #16a34a; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(34,197,94,0.3); }
+        .btn-ghost { background: #fff; color: var(--text); border-color: var(--line); }
+        .btn-ghost:hover { background: #f3e5d5; border-color: #c9a882; }
+        .btn-outline { background: transparent; color: var(--accent); border-color: var(--accent); }
+        .btn-outline:hover { background: var(--accent); color: #fff; }
+
+        @media (max-width: 600px) {
+            .success-card { padding: 28px 18px; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <div class="success-card">
+        <div class="success-icon">🎉</div>
+        <h1>Order Placed!</h1>
+        <p class="subtitle">Thank you for your purchase. Your order is being processed.</p>
+
+        <div class="order-info">
+            <div class="order-info-title">Order Details</div>
+            <div class="info-row">
+                <span class="label">Order ID</span>
+                <span class="value" th:text="'#' + ${order.id}"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Status</span>
+                <span class="badge-pending" th:text="${order.status}"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Recipient</span>
+                <span class="value" th:text="${order.customerName}"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Address</span>
+                <span class="value" th:text="${order.address}"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Ordered by</span>
+                <span class="value" th:text="${order.username}"></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Total Amount</span>
+                <span class="value total" th:text="${#numbers.formatDecimal(order.totalAmount,0,'COMMA',0,'POINT')} + ' ₫'"></span>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <a class="btn btn-green" th:href="@{'/orders/' + ${order.id}}">🚚 Track This Order</a>
+            <a class="btn btn-outline" th:href="@{/orders}">📦 My Orders</a>
+            <a class="btn btn-ghost" th:href="@{/books}">← Continue Shopping</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

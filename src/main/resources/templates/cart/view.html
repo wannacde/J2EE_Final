@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart – Bookstore</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/bookstore-ui.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7efe6; --surface: #fffaf4; --line: #e3d2be;
+            --text: #2f261d; --muted: #706253; --accent: #87563a; --accent-2: #40614f;
+        }
+        body { font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--text); }
+        .container { width: min(1000px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 48px; }
+
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .page-header h1 { font-size: 1.9rem; }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; border: 1.5px solid transparent; font-family: inherit; transition: all 0.18s; text-decoration: none; }
+        .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-primary:hover { background: #9a6344; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(135,86,58,0.25); }
+        .btn-green { background: var(--accent-2); color: #fff; border-color: var(--accent-2); }
+        .btn-green:hover { background: #4e7a62; transform: translateY(-1px); }
+        .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--line); }
+        .btn-ghost:hover { background: #f3e5d5; border-color: #c9a882; }
+        .btn-sm { padding: 7px 14px; font-size: 0.88rem; border-radius: 9px; }
+        .btn-danger { background: #fff; color: #b91c1c; border-color: #f5c6c6; }
+        .btn-danger:hover { background: #fef2f2; }
+
+        /* Empty Cart */
+        .empty-card {
+            background: var(--surface); border-radius: 22px; border: 1px solid var(--line);
+            padding: 60px 32px; text-align: center; box-shadow: 0 4px 18px rgba(70,44,25,0.06);
+        }
+        .empty-icon { font-size: 4rem; margin-bottom: 16px; }
+        .empty-card h2 { font-size: 1.5rem; margin-bottom: 10px; color: var(--muted); }
+        .empty-card p { color: var(--muted); margin-bottom: 24px; }
+
+        /* Cart Layout */
+        .cart-layout { display: grid; grid-template-columns: 1fr 320px; gap: 22px; align-items: start; }
+
+        /* Cart Table */
+        .cart-card {
+            background: var(--surface); border-radius: 18px; border: 1px solid var(--line);
+            box-shadow: 0 4px 18px rgba(70,44,25,0.07); overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            background: #f3e7d7; color: var(--muted); font-size: 0.82rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            padding: 14px 16px; text-align: left; border-bottom: 2px solid var(--line);
+        }
+        tbody tr { transition: background 0.15s; }
+        tbody tr:hover { background: #fdf5ec; }
+        tbody td { padding: 16px; border-bottom: 1px solid #f0e4d4; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+
+        .book-title-cell { font-weight: 600; font-size: 1rem; }
+        .price-cell { font-weight: 600; color: var(--accent); white-space: nowrap; }
+        .subtotal-cell { font-weight: 700; color: var(--accent); white-space: nowrap; }
+
+        .qty-form { display: flex; gap: 6px; align-items: center; }
+        .qty-form input {
+            width: 70px; padding: 8px 10px; border-radius: 9px;
+            border: 1.5px solid var(--line); background: #fffdf9; font-size: 0.95rem;
+            font-family: inherit; text-align: center;
+        }
+        .qty-form input:focus { outline: none; border-color: var(--accent); }
+
+        /* Summary Card */
+        .summary-card {
+            background: var(--surface); border-radius: 18px; border: 1px solid var(--line);
+            box-shadow: 0 4px 18px rgba(70,44,25,0.07); padding: 24px 22px;
+            position: sticky; top: 80px;
+        }
+        .summary-card h2 { font-size: 1.2rem; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 0.97rem; }
+        .summary-row.total { border-top: 2px solid var(--line); margin-top: 10px; padding-top: 14px; font-size: 1.15rem; font-weight: 700; color: var(--accent); }
+        .checkout-btn { width: 100%; margin-top: 18px; padding: 14px; font-size: 1.05rem; border-radius: 14px; }
+
+        @media (max-width: 860px) {
+            .cart-layout { grid-template-columns: 1fr; }
+            .summary-card { position: static; }
+        }
+        @media (max-width: 600px) {
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; }
+            tbody tr { margin-bottom: 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+            tbody td { border: none; padding: 10px 14px; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fa-solid fa-cart-shopping icon"></i> Shopping Cart</h1>
+        <a class="btn btn-ghost" th:href="@{/books}"><i class="fa-solid fa-arrow-left icon"></i> Continue Shopping</a>
+    </div>
+
+    <!-- Empty Cart -->
+    <div class="empty-card" th:if="${cart.empty}">
+        <div class="empty-icon"><i class="fa-solid fa-cart-shopping icon"></i></div>
+        <h2>Your cart is empty</h2>
+        <p>Looks like you haven't added any books yet.</p>
+        <a class="btn btn-primary" th:href="@{/books}">Browse Books</a>
+    </div>
+
+    <!-- Cart with items -->
+    <div class="cart-layout" th:if="${!cart.empty}">
+        <div class="cart-card">
+            <table>
+                <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${cart.items}">
+                    <td class="book-title-cell" th:text="${item.title}"></td>
+                    <td class="price-cell" th:text="${#numbers.formatDecimal(item.price,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                    <td>
+                        <form class="qty-form" th:action="@{/cart/update}" method="post">
+                            <input type="hidden" name="bookId" th:value="${item.bookId}">
+                            <input type="number" name="quantity" min="0" th:value="${item.quantity}">
+                            <button class="btn btn-ghost btn-sm" type="submit">Update</button>
+                        </form>
+                    </td>
+                    <td class="subtotal-cell" th:text="${#numbers.formatDecimal(item.subtotal,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                    <td>
+                        <form th:action="@{/cart/remove}" method="post" style="margin:0;">
+                            <input type="hidden" name="bookId" th:value="${item.bookId}">
+                            <button class="btn btn-danger btn-sm" type="submit"><i class="fa-solid fa-xmark"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-card">
+            <h2>Order Summary</h2>
+            <div class="summary-row">
+                <span>Items</span>
+                <span th:text="${cart.totalQuantity}">0</span>
+            </div>
+            <div class="summary-row total">
+                <span>Total</span>
+                <span th:text="${#numbers.formatDecimal(cart.totalAmount,0,'COMMA',0,'POINT')} + ' ₫'">0 ₫</span>
+            </div>
+            <a class="btn btn-green checkout-btn" sec:authorize="isAuthenticated()" href="#" onclick="openCheckoutModal(); return false;">
+                Proceed to Checkout →
+            </a>
+            <a class="btn btn-primary checkout-btn" sec:authorize="!isAuthenticated()" th:href="@{/login}">
+                Login to Checkout
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Checkout Selection Modal -->
+<div id="checkoutModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fffaf4; border-radius:20px; border:1px solid #e3d2be; box-shadow:0 8px 32px rgba(70,44,25,0.18); padding:32px 28px; width:min(560px, calc(100% - 32px)); max-height:85vh; overflow-y:auto;">
+        <h2 style="font-size:1.4rem; margin-bottom:6px;">Select items to checkout</h2>
+        <p style="color:#706253; font-size:0.9rem; margin-bottom:20px;">Select products and quantity you want to order.</p>
+
+        <form id="checkoutSelectForm" th:action="@{/orders/checkout}" method="get">
+            <div th:each="item : ${cart.items}" style="display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid #f0e4d4;">
+                <input type="checkbox" th:id="'chk-' + ${item.bookId}" th:value="${item.bookId}"
+                       onchange="toggleQty(this)" checked
+                       style="width:18px; height:18px; accent-color:#40614f; cursor:pointer; flex-shrink:0;">
+                <label th:for="'chk-' + ${item.bookId}" style="flex:1; font-weight:600; cursor:pointer;" th:text="${item.title}"></label>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <input type="number"
+                           th:id="'qty-' + ${item.bookId}"
+                           th:name="'qty-' + ${item.bookId}"
+                           th:value="${item.quantity}"
+                           th:data-price="${item.price}"
+                           th:max="${stockMap[item.bookId]}"
+                           min="1" style="width:65px; padding:6px 8px; border-radius:8px; border:1.5px solid #e3d2be; font-size:0.95rem; text-align:center;">
+                    <span style="color:#706253; font-size:0.82rem; white-space:nowrap;"
+                          th:text="'(stock: ' + ${stockMap[item.bookId]} + ')'" ></span>
+                </div>
+            </div>
+
+            <div style="margin-top:18px; padding-top:14px; border-top:2px solid #e3d2be; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <span style="color:#706253; font-size:0.9rem;">Selected total:</span>
+                    <span id="modalTotal" style="font-weight:700; color:#87563a; font-size:1.1rem; margin-left:8px;"></span>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" onclick="closeCheckoutModal()" style="padding:10px 20px; border-radius:10px; border:1.5px solid #e3d2be; background:#fff; font-family:inherit; font-size:0.95rem; cursor:pointer;">Cancel</button>
+                    <button type="submit" style="padding:10px 22px; border-radius:10px; border:none; background:#40614f; color:#fff; font-family:inherit; font-size:0.95rem; font-weight:600; cursor:pointer;">Continue →</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openCheckoutModal() {
+        document.getElementById('checkoutModal').style.display = 'flex';
+        updateModalTotal();
+    }
+
+    function closeCheckoutModal() {
+        document.getElementById('checkoutModal').style.display = 'none';
+    }
+
+    function toggleQty(checkbox) {
+        const qtyInput = document.getElementById('qty-' + checkbox.value);
+        qtyInput.disabled = !checkbox.checked;
+        updateModalTotal();
+    }
+
+    function updateModalTotal() {
+        let total = 0;
+        document.querySelectorAll('#checkoutSelectForm input[type=checkbox]').forEach(chk => {
+            if (chk.checked) {
+                const qty = parseInt(document.getElementById('qty-' + chk.value).value) || 0;
+                const price = parseFloat(document.getElementById('qty-' + chk.value).dataset.price) || 0;
+                total += qty * price;
+            }
+        });
+        document.getElementById('modalTotal').textContent = Math.round(total).toLocaleString('vi-VN') + ' ₫';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('#checkoutSelectForm input[type=number]').forEach(input => {
+            input.addEventListener('input', updateModalTotal);
+        });
+    });
+
+    // Khi submit form, build URL với các item được chọn
+    document.getElementById('checkoutSelectForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const params = new URLSearchParams();
+        let valid = true;
+        document.querySelectorAll('#checkoutSelectForm input[type=checkbox]').forEach(chk => {
+            if (chk.checked) {
+                const qtyInput = document.getElementById('qty-' + chk.value);
+                const qty = parseInt(qtyInput.value) || 0;
+                const max = parseInt(qtyInput.max) || 0;
+                if (qty < 1 || qty > max) {
+                    alert('Quantity for "' + chk.closest('div').querySelector('label').textContent.trim() + '" must be between 1 and ' + max + ' (in stock)');
+                    valid = false;
+                    return;
+                }
+                params.append('selected[' + chk.value + ']', qty);
+            }
+        });
+        if (!valid) return;
+        if ([...params].length === 0) {
+            alert('Please select at least 1 item!');
+            return;
+        }
+        window.location.href = '/orders/checkout?' + params.toString();
+    });
+
+    // Đóng modal khi click bên ngoài
+    document.getElementById('checkoutModal').addEventListener('click', function(e) {
+        if (e.target === this) closeCheckoutModal();
+    });
+</script>
+</body>
+</html>

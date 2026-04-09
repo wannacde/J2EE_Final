@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome – Bookstore</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/bookstore-ui.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: radial-gradient(ellipse at top left, #fdf3e7, #f0dcc8 50%, #e2c9ae);
+            font-family: Georgia, "Times New Roman", serif;
+            color: #2f261d;
+            padding: 24px 20px;
+        }
+        .card {
+            width: min(480px, 100%);
+            background: rgba(255,252,247,0.95);
+            border: 1px solid #dbc4aa;
+            border-radius: 28px;
+            padding: 44px 36px;
+            box-shadow: 0 24px 60px rgba(70,44,25,0.14);
+            text-align: center;
+        }
+        .success-icon { font-size: 4rem; margin-bottom: 16px; }
+        h1 { font-size: 1.9rem; color: #3f614f; margin-bottom: 8px; }
+        .message-box {
+            background: #f0fdf4; border: 1px solid #86efac; border-radius: 14px;
+            padding: 14px 18px; color: #166534; font-size: 0.97rem;
+            margin: 20px 0; line-height: 1.6;
+        }
+        .steps {
+            background: #fffaf3; border: 1px solid #e8d8c4; border-radius: 14px;
+            padding: 18px 20px; margin: 20px 0; text-align: left;
+        }
+        .steps-title { font-weight: 700; color: #87563a; margin-bottom: 12px; font-size: 0.97rem; }
+        .step { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 0.95rem; color: #4a3728; }
+        .step:last-child { margin-bottom: 0; }
+        .step-num {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: linear-gradient(135deg,#87563a,#a06a4a);
+            color: #fff; font-weight: bold; font-size: 0.85rem;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
+        .btn-primary {
+            display: block; padding: 13px; border-radius: 14px;
+            background: linear-gradient(135deg,#87563a,#a06a4a);
+            color: #fff; font-size: 1rem; font-weight: bold;
+            text-decoration: none; transition: all 0.2s;
+        }
+        .btn-primary:hover { background: linear-gradient(135deg,#9a6344,#b57a58); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(135,86,58,0.3); }
+        .btn-outline {
+            display: block; padding: 12px; border-radius: 14px;
+            border: 1.5px solid #87563a; color: #87563a;
+            font-size: 0.97rem; font-weight: 600; text-decoration: none; transition: all 0.2s;
+        }
+        .btn-outline:hover { background: #87563a; color: #fff; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="success-icon"><i class="fa-solid fa-circle-check icon icon-success"></i></div>
+    <h1>Welcome to Bookstore!</h1>
+
+    <div class="message-box" th:text="${message}">Account created successfully!</div>
+
+    <div class="steps">
+        <div class="steps-title">What's next?</div>
+        <div class="step">
+            <div class="step-num">1</div>
+            <span>Log in with your new account</span>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <span>Browse and search for your favorite books</span>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <span>Add books to your cart and checkout</span>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <a th:href="@{/login}" class="btn-primary">Login to Your Account</a>
+        <a th:href="@{/books}" class="btn-outline">Browse Books First</a>
+    </div>
+</div>
+</body>
+</html>

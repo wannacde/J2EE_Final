@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders – Bookstore</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7efe6; --surface: #fffaf4; --line: #e3d2be;
+            --text: #2f261d; --muted: #706253; --accent: #87563a; --accent-2: #40614f;
+        }
+        body { font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--text); }
+        .container { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 48px; }
+
+        .page-header { margin-bottom: 26px; }
+        .page-header h1 { font-size: 2rem; color: var(--text); margin-bottom: 4px; }
+        .page-header p { color: var(--muted); font-size: 0.97rem; }
+
+        /* Empty */
+        .empty-card {
+            background: var(--surface); border-radius: 22px; border: 1px solid var(--line);
+            padding: 60px 32px; text-align: center; box-shadow: 0 4px 18px rgba(70,44,25,0.06);
+        }
+        .empty-icon { font-size: 3.5rem; margin-bottom: 14px; }
+        .empty-card h2 { font-size: 1.4rem; color: var(--muted); margin-bottom: 10px; }
+        .empty-card p { color: var(--muted); margin-bottom: 22px; }
+
+        /* Order Cards */
+        .order-list { display: flex; flex-direction: column; gap: 16px; }
+        .order-card {
+            background: var(--surface); border-radius: 18px; border: 1px solid var(--line);
+            padding: 22px 24px; box-shadow: 0 4px 16px rgba(70,44,25,0.07);
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .order-card:hover { box-shadow: 0 8px 28px rgba(70,44,25,0.12); transform: translateY(-2px); }
+
+        .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+        .order-id { font-size: 1.1rem; font-weight: 700; }
+        .order-id span { color: var(--accent); }
+
+        /* Status badges */
+        .badge { padding: 5px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-pending   { background: #fef9c3; color: #854d0e; }
+        .badge-confirmed { background: #dbeafe; color: #1e40af; }
+        .badge-shipping  { background: #ede9fe; color: #5b21b6; }
+        .badge-delivered { background: #dcfce7; color: #166534; }
+        .badge-cancelled { background: #fee2e2; color: #991b1b; }
+        .badge-default   { background: #f3f4f6; color: #374151; }
+
+        .order-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .meta-item { font-size: 0.93rem; color: var(--muted); }
+        .meta-item strong { color: var(--text); }
+
+        .order-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid var(--line); flex-wrap: wrap; gap: 10px; }
+        .order-total { font-size: 1.1rem; font-weight: 700; color: var(--accent); }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 9px 18px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: 1.5px solid transparent; font-family: inherit; transition: all 0.18s; text-decoration: none; }
+        .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-primary:hover { background: #9a6344; }
+        .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--line); }
+        .btn-ghost:hover { background: #f3e5d5; border-color: #c9a882; }
+
+        @media (max-width: 600px) {
+            .order-meta { grid-template-columns: 1fr; }
+            .order-card { padding: 16px; }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/bookstore-ui.css">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <h1>My Orders</h1>
+        <p>Track and manage all your orders here.</p>
+    </div>
+
+    <!-- Empty -->
+    <div class="empty-card" th:if="${#lists.isEmpty(orders)}">
+        <div class="empty-icon"><i class="fa-regular fa-envelope-open icon"></i></div>
+        <h2>No orders yet</h2>
+        <p>You haven't placed any orders. Start shopping now!</p>
+        <a class="btn btn-primary" th:href="@{/books}">Browse Books</a>
+    </div>
+
+    <!-- Order List -->
+    <div class="order-list" th:if="${!#lists.isEmpty(orders)}">
+        <div class="order-card" th:each="order : ${orders}">
+            <div class="order-header">
+                <div class="order-id">Order <span th:text="'#' + ${order.id}"></span></div>
+                <span class="badge"
+                      th:classappend="${order.status.name() == 'PENDING'} ? 'badge-pending' :
+                                      (${order.status.name() == 'PROCESSING'} ? 'badge-confirmed' :
+                                      (${order.status.name() == 'SHIPPED'} ? 'badge-shipping' :
+                                      (${order.status.name() == 'DELIVERED'} ? 'badge-delivered' :
+                                      (${order.status.name() == 'CANCELLED'} ? 'badge-cancelled' : 'badge-default'))))"
+                      th:text="${order.status}"></span>
+            </div>
+            <div class="order-meta">
+                <div class="meta-item"><i class="fa-regular fa-calendar icon"></i> <strong th:text="${#temporals.format(order.createdAt,'dd MMM yyyy, HH:mm')}"></strong></div>
+                <div class="meta-item"><i class="fa-solid fa-user icon"></i> <strong th:text="${order.customerName}"></strong></div>
+                <div class="meta-item" th:if="${order.trackingNumber != null}"><i class="fa-solid fa-truck icon"></i> <strong th:text="${order.trackingNumber}"></strong></div>
+            </div>
+            <div class="order-footer">
+                <div class="order-total" th:text="${#numbers.formatDecimal(order.totalAmount,0,'COMMA',0,'POINT')} + ' ₫'"></div>
+                <a class="btn btn-primary" th:href="@{'/orders/' + ${order.id}}">View Details →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div th:if="${orderPage.totalPages > 1}" style="display:flex; justify-content:center; align-items:center; gap:10px; margin-top:10px;">
+        <a class="btn btn-ghost" th:href="@{/orders(page=${orderPage.number - 1})}"
+           th:style="${orderPage.first} ? 'pointer-events:none; opacity:0.4;'">← Previous</a>
+        <span style="padding:10px 18px; background:var(--surface); border:1px solid var(--line); border-radius:12px; font-size:0.95rem;">
+            Page <strong th:text="${orderPage.number + 1}"></strong> / <strong th:text="${orderPage.totalPages}"></strong>
+        </span>
+        <a class="btn btn-ghost" th:href="@{/orders(page=${orderPage.number + 1})}"
+           th:style="${orderPage.last} ? 'pointer-events:none; opacity:0.4;'">Next →</a>
+    </div>
+</div>
+</body>
+</html>

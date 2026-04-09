@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommended for You – Bookstore</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7efe6; --surface: #fffaf4; --line: #e3d2be;
+            --text: #2f261d; --muted: #706253; --accent: #87563a; --accent-2: #40614f;
+        }
+        body { font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--text); }
+        .container { width: min(1000px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 48px; }
+
+        .page-header { margin-bottom: 28px; }
+        .page-header h1 { font-size: 2rem; margin-bottom: 6px; }
+        .page-header p { color: var(--muted); font-size: 0.97rem; line-height: 1.6; }
+
+        /* Empty */
+        .empty-card {
+            background: var(--surface); border-radius: 22px; border: 1px solid var(--line);
+            padding: 60px 32px; text-align: center; box-shadow: 0 4px 18px rgba(70,44,25,0.06);
+        }
+        .empty-icon { font-size: 3.5rem; margin-bottom: 14px; }
+        .empty-card h2 { font-size: 1.4rem; color: var(--muted); margin-bottom: 10px; }
+        .empty-card p { color: var(--muted); margin-bottom: 22px; line-height: 1.6; }
+
+        /* Book Grid */
+        .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 20px; }
+        .book-card {
+            background: var(--surface); border-radius: 18px; border: 1px solid var(--line);
+            overflow: hidden; display: flex; flex-direction: column;
+            box-shadow: 0 4px 16px rgba(71,49,16,0.07); transition: all 0.22s;
+        }
+        .book-card:hover { box-shadow: 0 10px 32px rgba(71,49,16,0.14); transform: translateY(-3px); }
+        .book-card img { width: 100%; height: 200px; object-fit: cover; display: block; }
+        .book-content { padding: 16px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
+        .category-tag {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            background: #edf5f0; color: var(--accent-2); font-size: 0.78rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; width: fit-content;
+        }
+        .book-title { font-size: 1.05rem; font-weight: 700; line-height: 1.3; }
+        .book-author { color: var(--muted); font-size: 0.9rem; }
+        .book-desc { color: var(--muted); font-size: 0.88rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .book-price { font-size: 1.05rem; font-weight: 700; color: var(--accent); }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; border-radius: 11px; font-size: 0.93rem; font-weight: 600; cursor: pointer; border: 1.5px solid transparent; font-family: inherit; transition: all 0.18s; text-decoration: none; }
+        .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-primary:hover { background: #9a6344; transform: translateY(-1px); }
+        .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--line); }
+        .btn-ghost:hover { background: #f3e5d5; border-color: #c9a882; }
+
+        .view-btn { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); }
+
+        .back-row { margin-top: 28px; }
+
+        @media (max-width: 600px) {
+            .book-grid { grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); }
+            .book-card img { height: 150px; }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/bookstore-ui.css">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fa-solid fa-star icon"></i> Recommended for You</h1>
+        <p>Books picked based on your wishlist and browsing history.</p>
+    </div>
+
+    <!-- Empty -->
+    <div class="empty-card" th:if="${#lists.isEmpty(recommendations)}">
+        <div class="empty-icon"><i class="fa-solid fa-magnifying-glass icon"></i></div>
+        <h2>No recommendations yet</h2>
+        <p>Add books to your wishlist and browse more to get personalized recommendations!</p>
+        <a class="btn btn-primary" th:href="@{/books}">Browse Books</a>
+    </div>
+
+    <!-- Recommendations Grid -->
+    <div class="book-grid" th:if="${!#lists.isEmpty(recommendations)}">
+        <div class="book-card" th:each="book : ${recommendations}">
+            <a th:href="@{'/books/' + ${book.id}}">
+                <img th:src="${book.imageUrl}" th:alt="${book.title}">
+            </a>
+            <div class="book-content">
+                <span class="category-tag" th:text="${book.category.name}"></span>
+                <div class="book-title" th:text="${book.title}"></div>
+                <div class="book-author">by <span th:text="${book.author}"></span></div>
+                <div class="book-desc" th:text="${book.description}"></div>
+                <div class="book-price" th:text="${#numbers.formatDecimal(book.price,0,'COMMA',0,'POINT')} + ' ₫'"></div>
+                <div class="view-btn">
+                    <a class="btn btn-primary" style="width:100%;" th:href="@{'/books/' + ${book.id}}">View Details →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="back-row">
+        <a class="btn btn-ghost" th:href="@{/books}"><i class="fa-solid fa-arrow-left icon"></i> Back to Books</a>
+    </div>
+</div>
+</body>
+</html>

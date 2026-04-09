@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist – Bookstore</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7efe6; --surface: #fffaf4; --line: #e3d2be;
+            --text: #2f261d; --muted: #706253; --accent: #87563a; --accent-2: #40614f;
+        }
+        body { font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--text); }
+        .container { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 48px; }
+
+        .page-header { margin-bottom: 26px; }
+        .page-header h1 { font-size: 2rem; margin-bottom: 4px; }
+        .page-header p { color: var(--muted); font-size: 0.97rem; }
+
+        /* Empty */
+        .empty-card {
+            background: var(--surface); border-radius: 22px; border: 1px solid var(--line);
+            padding: 60px 32px; text-align: center; box-shadow: 0 4px 18px rgba(70,44,25,0.06);
+        }
+        .empty-icon { font-size: 3.5rem; margin-bottom: 14px; }
+        .empty-card h2 { font-size: 1.4rem; color: var(--muted); margin-bottom: 10px; }
+        .empty-card p { color: var(--muted); margin-bottom: 22px; }
+
+        /* Wishlist Items */
+        .wishlist-list { display: flex; flex-direction: column; gap: 14px; }
+        .wishlist-item {
+            background: var(--surface); border-radius: 18px; border: 1px solid var(--line);
+            padding: 20px 22px; display: flex; align-items: center; gap: 18px;
+            box-shadow: 0 3px 14px rgba(70,44,25,0.06); transition: all 0.2s;
+        }
+        .wishlist-item:hover { box-shadow: 0 6px 22px rgba(70,44,25,0.11); transform: translateY(-2px); }
+
+        .wishlist-icon { font-size: 2rem; flex-shrink: 0; }
+        .wishlist-info { flex: 1; min-width: 0; }
+        .wishlist-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .wishlist-author { color: var(--muted); font-size: 0.92rem; margin-bottom: 6px; }
+        .wishlist-price { font-size: 1rem; font-weight: 700; color: var(--accent); }
+
+        .wishlist-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 9px 16px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: 1.5px solid transparent; font-family: inherit; transition: all 0.18s; text-decoration: none; }
+        .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-primary:hover { background: #9a6344; }
+        .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--line); }
+        .btn-ghost:hover { background: #f3e5d5; border-color: #c9a882; }
+        .btn-danger { background: #fff; color: #b91c1c; border-color: #f5c6c6; }
+        .btn-danger:hover { background: #fef2f2; }
+
+        .back-row { margin-top: 28px; }
+
+        @media (max-width: 600px) {
+            .wishlist-item { flex-wrap: wrap; }
+            .wishlist-actions { width: 100%; justify-content: flex-end; }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/bookstore-ui.css">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fa-regular fa-heart icon"></i> My Wishlist</h1>
+        <p>Books you've saved for later.</p>
+    </div>
+
+    <!-- Empty -->
+    <div class="empty-card" th:if="${#lists.isEmpty(wishlist)}">
+        <div class="empty-icon"><i class="fa-regular fa-heart-crack icon"></i></div>
+        <h2>Your wishlist is empty</h2>
+        <p>Browse books and click the Wishlist button to save them here.</p>
+        <a class="btn btn-primary" th:href="@{/books}">Browse Books</a>
+    </div>
+
+    <!-- Wishlist Items -->
+    <div class="wishlist-list" th:if="${!#lists.isEmpty(wishlist)}">
+        <div class="wishlist-item" th:each="item : ${wishlist}">
+            <div class="wishlist-icon"><i class="fa-solid fa-book icon"></i></div>
+            <div class="wishlist-info">
+                <div class="wishlist-title" th:text="${item.book.title}"></div>
+                <div class="wishlist-author">by <span th:text="${item.book.author}"></span></div>
+                <div class="wishlist-price" th:if="${item.book.price != null}"
+                     th:text="${#numbers.formatDecimal(item.book.price,0,'COMMA',0,'POINT')} + ' ₫'"></div>
+            </div>
+            <div class="wishlist-actions">
+                <a class="btn btn-ghost" th:href="@{'/books/' + ${item.book.id}}">View</a>
+                <form th:action="@{'/wishlist/remove/' + ${item.book.id}}" method="post" style="margin:0;">
+                    <button type="submit" class="btn btn-danger"><i class="fa-solid fa-xmark"></i> Remove</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="back-row">
+        <a class="btn btn-ghost" th:href="@{/books}"><i class="fa-solid fa-arrow-left icon"></i> Back to Books</a>
+    </div>
+</div>
+</body>
+</html>

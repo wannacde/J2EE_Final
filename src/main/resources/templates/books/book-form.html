@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${book.id == null} ? 'Add Book – Admin' : 'Edit Book – Admin'"></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7efe6; --surface: #fffaf4; --line: #e3d2be;
+            --text: #2f261d; --muted: #706253; --accent: #87563a;
+        }
+        body { font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--text); }
+
+        /* Admin Navbar */
+        .admin-nav {
+            background: #2f261d; color: #f5e6d3; padding: 0;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        }
+        .admin-nav-inner {
+            width: min(1100px, 96vw); margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center; min-height: 60px; padding: 0 12px;
+        }
+        .admin-brand { font-size: 1.3rem; font-weight: 700; color: #e8c99a; text-decoration: none; letter-spacing: 1px; }
+        .admin-nav-links { display: flex; gap: 6px; align-items: center; }
+        .admin-nav-links a {
+            padding: 7px 14px; border-radius: 8px; color: #d4b896; text-decoration: none;
+            font-size: 0.9rem; font-weight: 500; transition: all 0.18s;
+        }
+        .admin-nav-links a:hover { background: rgba(255,255,255,0.12); color: #fff; }
+        .admin-nav-links a.active { background: var(--accent); color: #fff; }
+
+        .container { width: min(640px, calc(100% - 32px)); margin: 32px auto 48px; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 600; font-size: 0.95rem; text-decoration: none; margin-bottom: 20px; }
+        .back-link:hover { text-decoration: underline; }
+
+        .form-card {
+            background: var(--surface); border-radius: 22px; border: 1px solid var(--line);
+            box-shadow: 0 6px 24px rgba(70,44,25,0.08); padding: 36px 32px;
+        }
+        .form-card h1 { font-size: 1.7rem; margin-bottom: 28px; color: var(--text); }
+
+        /* ISBN Lookup */
+        .isbn-row {
+            display: flex; gap: 10px; align-items: flex-end; margin-bottom: 24px;
+            padding: 16px 18px; background: #f3e7d7; border-radius: 14px; border: 1px solid #e0cdb8;
+        }
+        .isbn-row .isbn-group { flex: 1; }
+        .isbn-row label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .isbn-row input { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1.5px solid var(--line); background: #fffdf9; font-size: 0.97rem; font-family: inherit; }
+        .isbn-row input:focus { outline: none; border-color: var(--accent); }
+
+        .form-group { margin-bottom: 20px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group label { display: block; font-weight: 600; color: var(--muted); margin-bottom: 7px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.4px; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 11px 14px; border-radius: 12px;
+            border: 1.5px solid var(--line); background: #fffdf9; color: var(--text);
+            font-size: 0.97rem; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(135,86,58,0.1);
+        }
+        .form-group textarea { resize: vertical; min-height: 90px; }
+
+        /* Image Preview */
+        .img-preview { margin-top: 10px; border-radius: 10px; max-height: 120px; max-width: 100%; display: none; border: 1px solid var(--line); }
+
+        .form-actions { display: flex; gap: 12px; margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--line); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 24px; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; border: 1.5px solid transparent; font-family: inherit; transition: all 0.18s; text-decoration: none; }
+        .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); flex: 1; }
+        .btn-primary:hover { background: #9a6344; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(135,86,58,0.3); }
+        .btn-ghost { background: #fff; color: var(--text); border-color: var(--line); }
+        .btn-ghost:hover { background: #f3e5d5; border-color: #c9a882; }
+        .btn-isbn { padding: 10px 18px; border-radius: 10px; background: var(--accent); color: #fff; border: none; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 0.95rem; white-space: nowrap; transition: all 0.18s; }
+        .btn-isbn:hover { background: #9a6344; }
+
+        @media (max-width: 600px) {
+            .form-card { padding: 22px 16px; }
+            .form-row { grid-template-columns: 1fr; }
+            .isbn-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Admin Navbar -->
+<nav class="admin-nav">
+    <div class="admin-nav-inner">
+        <a class="admin-brand" th:href="@{/admin/books}">⚙ ADMIN PANEL</a>
+        <div class="admin-nav-links">
+            <a th:href="@{/admin/books}" class="active">📚 Books</a>
+            <a th:href="@{/admin/analytics}">📊 Analytics</a>
+            <a th:href="@{/discount-codes/admin}">🏷 Discounts</a>
+            <a th:href="@{/books}">🌐 View Store</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <a class="back-link" th:href="@{/admin/books}">← Back to Book List</a>
+
+    <div class="form-card">
+        <h1 th:text="${book.id == null} ? '📖 Add New Book' : '✏ Edit Book'"></h1>
+
+        <!-- ISBN Lookup -->
+        <div class="isbn-row">
+            <div class="isbn-group">
+                <label>Auto-fill from ISBN</label>
+                <input type="text" id="isbnInput" placeholder="Enter ISBN-10 or ISBN-13...">
+            </div>
+            <button type="button" class="btn-isbn" onclick="fetchBookInfo()"><i class="fa-solid fa-magnifying-glass"></i> Lookup</button>
+        </div>
+
+        <form th:action="${book.id == null} ? @{/admin/books/create} : @{/admin/books/edit}" method="post">
+            <input type="hidden" th:if="${book.id != null}" name="id" th:value="${book.id}">
+
+            <div class="form-group">
+                <label>Title *</label>
+                <input type="text" name="title" id="titleInput" th:value="${book.title}" required placeholder="Book title">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Author *</label>
+                    <input type="text" name="author" id="authorInput" th:value="${book.author}" required placeholder="Author name">
+                </div>
+                <div class="form-group">
+                    <label>Category *</label>
+                    <select name="category.id" required>
+                        <option value="" disabled>Select category...</option>
+                        <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"
+                                th:selected="${cat.id == book.category?.id}"></option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" id="descInput" th:text="${book.description}" placeholder="Book description..."></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Price (VND) *</label>
+                    <input type="number" name="price" id="priceInput" th:value="${book.price}" step="1000" min="0" required placeholder="e.g. 150000">
+                </div>
+                <div class="form-group">
+                    <label>Stock *</label>
+                    <input type="number" name="stock" th:value="${book.stock}" min="0" required placeholder="e.g. 50">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Image URL</label>
+                <input type="text" name="imageUrl" id="imgInput" th:value="${book.imageUrl}" placeholder="https://..." oninput="previewImg(this.value)">
+                <img id="imgPreview" class="img-preview" alt="Preview">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Book</button>
+                <a th:href="@{/admin/books}" class="btn btn-ghost">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function fetchBookInfo() {
+    const isbn = document.getElementById('isbnInput').value.trim();
+    if (!isbn) { alert('Please enter an ISBN!'); return; }
+    fetch(`/api/books/fetch?isbn=${isbn}`)
+        .then(res => res.json())
+        .then(data => {
+            const key = `ISBN:${isbn}`;
+            if (!data[key]) { alert('Book not found!'); return; }
+            const info = data[key];
+            document.getElementById('titleInput').value = info.title || '';
+            document.getElementById('authorInput').value = (info.authors && info.authors.map(a => a.name).join(', ')) || '';
+            document.getElementById('descInput').value = info.description || '';
+            const imgUrl = (info.cover && (info.cover.large || info.cover.medium || info.cover.small)) || '';
+            document.getElementById('imgInput').value = imgUrl;
+            previewImg(imgUrl);
+        })
+        .catch(() => alert('Failed to fetch book info.'));
+}
+function previewImg(url) {
+    const img = document.getElementById('imgPreview');
+    if (url) { img.src = url; img.style.display = 'block'; }
+    else { img.style.display = 'none'; }
+}
+// Init preview if editing
+window.onload = () => {
+    const imgInput = document.getElementById('imgInput');
+    if (imgInput && imgInput.value) previewImg(imgInput.value);
+};
+</script>
+</body>
+</html>

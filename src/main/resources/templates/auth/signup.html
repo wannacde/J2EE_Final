@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up – Bookstore</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: radial-gradient(ellipse at top left, #fdf3e7, #f0dcc8 50%, #e2c9ae);
+            font-family: Georgia, "Times New Roman", serif;
+            color: #2f261d;
+            padding: 24px 20px;
+        }
+        .card {
+            width: min(520px, 100%);
+            background: rgba(255,252,247,0.95);
+            border: 1px solid #dbc4aa;
+            border-radius: 28px;
+            padding: 40px 36px;
+            box-shadow: 0 24px 60px rgba(70,44,25,0.14);
+        }
+        .logo { text-align:center; font-size:2rem; margin-bottom:6px; }
+        h1 { text-align:center; font-size:1.7rem; color:#87563a; margin-bottom:6px; }
+        .subtitle { text-align:center; color:#706253; font-size:0.97rem; margin-bottom:28px; }
+        .form-group { margin-bottom:16px; }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        label { display:block; font-weight:600; color:#4a3728; margin-bottom:6px; font-size:0.93rem; }
+        input {
+            width:100%; padding:11px 14px; border-radius:12px;
+            border:1.5px solid #dbc4aa; background:#fffdf9; color:#2f261d;
+            font-size:0.97rem; font-family:inherit; transition:border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus { outline:none; border-color:#87563a; box-shadow:0 0 0 3px rgba(135,86,58,0.12); }
+        .error-field { color:#b91c1c; font-size:0.85rem; margin-top:4px; }
+        .error-box {
+            background:#fef2f2; border:1px solid #fca5a5; border-radius:10px;
+            padding:10px 14px; color:#b91c1c; font-size:0.93rem; margin-bottom:18px;
+        }
+        .btn-primary {
+            width:100%; padding:13px; border-radius:14px; border:none;
+            background:linear-gradient(135deg,#87563a,#a06a4a);
+            color:#fff; font-size:1.05rem; font-weight:bold; cursor:pointer;
+            font-family:inherit; transition:all 0.2s; margin-top:8px;
+        }
+        .btn-primary:hover { background:linear-gradient(135deg,#9a6344,#b57a58); transform:translateY(-1px); box-shadow:0 6px 20px rgba(135,86,58,0.3); }
+        .divider { border:none; border-top:1px solid #e8d8c4; margin:22px 0; }
+        .links { display:flex; flex-direction:column; gap:10px; align-items:center; }
+        .links a { color:#87563a; text-decoration:none; font-size:0.95rem; font-weight:500; }
+        .links a:hover { text-decoration:underline; }
+        .links .login-link {
+            display:inline-block; padding:10px 24px; border-radius:12px;
+            border:1.5px solid #87563a; color:#87563a; font-weight:600; transition:all 0.2s;
+        }
+        .links .login-link:hover { background:#87563a; color:#fff; text-decoration:none; }
+        @media (max-width:480px) {
+            .card { padding:28px 18px; }
+            .form-row { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="logo">📚</div>
+    <h1>Create Account</h1>
+    <p class="subtitle">Join our bookstore community and start shopping today!</p>
+
+    <div th:if="${error}" class="error-box" th:text="${error}"></div>
+
+    <form th:action="@{/signup}" th:object="${signupRequest}" method="post" novalidate>
+        <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" th:field="*{fullName}" placeholder="Your full name" required>
+            <div class="error-field" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" th:field="*{username}" placeholder="Username" required>
+                <div class="error-field" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" th:field="*{email}" placeholder="your@email.com" required>
+                <div class="error-field" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" th:field="*{password}" placeholder="At least 6 characters" required>
+                <div class="error-field" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" th:field="*{confirmPassword}" placeholder="Re-enter password" required>
+                <div class="error-field" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Create Account</button>
+    </form>
+
+    <hr class="divider">
+    <div class="links">
+        <a th:href="@{/login}" class="login-link">Already have an account? Login</a>
+        <a th:href="@{/books}">← Back to book list</a>
+    </div>
+</div>
+</body>
+</html>

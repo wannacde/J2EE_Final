@@ -1,0 +1,10 @@
+# Question File Example
+
+This file is created as you requested. Vui lòng xác nhận nội dung mong muốn hoặc gửi chi tiết các câu hỏi bạn muốn lưu tại đây.
+
+Ví dụ:
+1. Bạn muốn lưu các câu hỏi khảo sát user?
+2. Câu hỏi về sách, đơn hàng, tài khoản?
+3. Hay là các câu hỏi thường gặp (FAQ)?
+
+Bạn có thể chỉnh sửa file này hoặc gửi nội dung cụ thể để tôi cập nhật đúng ý bạn.

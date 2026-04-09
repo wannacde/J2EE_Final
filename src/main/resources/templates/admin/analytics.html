@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics – Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/bookstore-ui.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7efe6; --surface: #fffaf4; --line: #e3d2be;
+            --text: #2f261d; --muted: #706253; --accent: #87563a; --accent-2: #40614f;
+        }
+        body { font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--text); }
+
+        /* Admin Navbar */
+        .admin-nav {
+            background: #2f261d; padding: 0; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        }
+        .admin-nav-inner {
+            width: min(1100px, 96vw); margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center; min-height: 60px; padding: 0 12px;
+        }
+        .admin-brand { font-size: 1.3rem; font-weight: 700; color: #e8c99a; text-decoration: none; letter-spacing: 1px; }
+        .admin-nav-links { display: flex; gap: 6px; }
+        .admin-nav-links a {
+            padding: 7px 14px; border-radius: 8px; color: #d4b896; text-decoration: none;
+            font-size: 0.9rem; font-weight: 500; transition: all 0.18s;
+        }
+        .admin-nav-links a:hover { background: rgba(255,255,255,0.12); color: #fff; }
+        .admin-nav-links a.active { background: var(--accent); color: #fff; }
+
+        .container { width: min(1000px, calc(100% - 32px)); margin: 32px auto 48px; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 600; font-size: 0.95rem; text-decoration: none; margin-bottom: 20px; }
+        .back-link:hover { text-decoration: underline; }
+
+        .page-header { margin-bottom: 28px; }
+        .page-header h1 { font-size: 1.9rem; margin-bottom: 4px; }
+        .page-header p { color: var(--muted); font-size: 0.97rem; }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 28px; }
+        .stat-card {
+            background: var(--surface); border-radius: 18px; border: 1px solid var(--line);
+            padding: 24px 22px; box-shadow: 0 4px 16px rgba(70,44,25,0.07);
+            display: flex; align-items: center; gap: 16px;
+        }
+        .stat-icon { font-size: 2.2rem; flex-shrink: 0; }
+        .stat-label { font-size: 0.82rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent); line-height: 1; }
+        .stat-card.green .stat-value { color: var(--accent-2); }
+        .stat-card.blue .stat-value { color: #1e40af; }
+
+        /* Chart */
+        .chart-card {
+            background: var(--surface); border-radius: 18px; border: 1px solid var(--line);
+            box-shadow: 0 4px 18px rgba(70,44,25,0.07); padding: 28px 24px; margin-bottom: 22px;
+        }
+        .chart-card h2 { font-size: 1.2rem; margin-bottom: 20px; color: var(--text); }
+        .chart-wrap { position: relative; height: 320px; }
+
+        /* Top Books */
+        .top-books-card {
+            background: var(--surface); border-radius: 18px; border: 1px solid var(--line);
+            box-shadow: 0 4px 18px rgba(70,44,25,0.07); padding: 28px 24px;
+        }
+        .top-books-card h2 { font-size: 1.2rem; margin-bottom: 20px; }
+        .top-book-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid #f0e4d4; }
+        .top-book-row:last-child { border-bottom: none; }
+        .rank { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .rank.gold { background: #f59e0b; }
+        .rank.silver { background: #9ca3af; }
+        .rank.bronze { background: #b45309; }
+        .top-book-title { flex: 1; font-weight: 600; font-size: 0.97rem; }
+        .top-book-count { font-weight: 700; color: var(--accent); font-size: 0.95rem; }
+
+        @media (max-width: 700px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Admin Navbar -->
+<nav class="admin-nav">
+    <div class="admin-nav-inner">
+        <a class="admin-brand" th:href="@{/admin/books}"><i class="fa-solid fa-gear icon"></i> ADMIN PANEL</a>
+        <div class="admin-nav-links">
+            <a th:href="@{/admin/books}"><i class="fa-solid fa-book icon"></i> Books</a>
+            <a th:href="@{/admin/analytics}" class="active"><i class="fa-solid fa-chart-column icon"></i> Analytics</a>
+            <a th:href="@{/discount-codes/admin}"><i class="fa-solid fa-tags icon"></i> Discounts</a>
+            <a th:href="@{/books}"><i class="fa-solid fa-globe icon"></i> View Store</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <a class="back-link" th:href="@{/admin/books}">← Back to Books</a>
+
+    <div class="page-header">
+        <h1><i class="fa-solid fa-chart-column icon"></i> Sales Analytics</h1>
+        <p>Overview of your bookstore performance.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-box icon"></i></div>
+            <div>
+                <div class="stat-label">Total Orders</div>
+                <div class="stat-value" th:text="${totalOrders}">0</div>
+            </div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-icon"><i class="fa-solid fa-book icon"></i></div>
+            <div>
+                <div class="stat-label">Books Sold</div>
+                <div class="stat-value" th:text="${totalSales}">0</div>
+            </div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-icon"><i class="fa-solid fa-sack-dollar icon"></i></div>
+            <div>
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value" style="font-size:1.4rem;" th:text="${#numbers.formatDecimal(totalRevenue,0,'COMMA',0,'POINT')} + ' ₫'">0 ₫</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Chart -->
+    <div class="chart-card">
+        <h2><i class="fa-solid fa-chart-line icon"></i> Revenue by Day</h2>
+        <div class="chart-wrap">
+            <canvas id="salesChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Books (if available) -->
+    <div class="top-books-card" th:if="${topBooks != null && !#lists.isEmpty(topBooks)}">
+        <h2>🏆 Top Selling Books</h2>
+        <div th:each="entry, stat : ${topBooks}" class="top-book-row">
+            <div class="rank"
+                 th:classappend="${stat.index == 0} ? ' gold' : (${stat.index == 1} ? ' silver' : (${stat.index == 2} ? ' bronze' : ''))"
+                 th:text="${stat.index + 1}"></div>
+            <div class="top-book-title" th:text="${entry.key}"></div>
+            <div class="top-book-count" th:text="${entry.value} + ' sold'"></div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var salesByDay = /*[[${salesByDay}]]*/ {};
+    var labels = Object.keys(salesByDay);
+    var data = Object.values(salesByDay);
+    var ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Revenue (₫)',
+                data: data,
+                borderColor: '#87563a',
+                backgroundColor: 'rgba(135,86,58,0.08)',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.35,
+                pointBackgroundColor: '#87563a',
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ' ₫' + ctx.parsed.y.toLocaleString()
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { callback: v => '₫' + v.toLocaleString() }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

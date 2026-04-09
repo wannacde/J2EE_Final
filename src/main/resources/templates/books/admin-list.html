@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin – Book Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7efe6; --surface: #fffaf4; --line: #e3d2be;
+            --text: #2f261d; --muted: #706253; --accent: #87563a; --danger: #b91c1c;
+        }
+        body { font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--text); }
+
+        /* Admin Navbar */
+        .admin-nav {
+            background: #2f261d; color: #f5e6d3; padding: 0;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        }
+        .admin-nav-inner {
+            width: min(1100px, 96vw); margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center; min-height: 60px; padding: 0 12px;
+        }
+        .admin-brand { font-size: 1.3rem; font-weight: 700; color: #e8c99a; text-decoration: none; letter-spacing: 1px; }
+        .admin-nav-links { display: flex; gap: 6px; align-items: center; }
+        .admin-nav-links a {
+            padding: 7px 14px; border-radius: 8px; color: #d4b896; text-decoration: none;
+            font-size: 0.9rem; font-weight: 500; transition: all 0.18s;
+        }
+        .admin-nav-links a:hover, .admin-nav-links a.active { background: rgba(255,255,255,0.12); color: #fff; }
+        .admin-nav-links a.active { background: var(--accent); color: #fff; }
+
+        .container { width: min(1100px, calc(100% - 32px)); margin: 32px auto 48px; }
+
+        /* Page Header */
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .page-header h1 { font-size: 1.8rem; color: var(--text); }
+
+        /* Stats Row */
+        .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 24px; }
+        .stat-card {
+            background: var(--surface); border-radius: 16px; border: 1px solid var(--line);
+            padding: 18px 20px; box-shadow: 0 3px 12px rgba(70,44,25,0.06);
+        }
+        .stat-card .label { font-size: 0.85rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .stat-card .value { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+
+        /* Table Card */
+        .table-card {
+            background: var(--surface); border-radius: 18px; border: 1px solid var(--line);
+            box-shadow: 0 4px 18px rgba(70,44,25,0.07); overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            background: #f3e7d7; color: var(--muted); font-size: 0.82rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            padding: 14px 16px; text-align: left; border-bottom: 2px solid var(--line);
+        }
+        tbody tr { transition: background 0.15s; }
+        tbody tr:hover { background: #fdf5ec; }
+        tbody td { padding: 14px 16px; border-bottom: 1px solid #f0e4d4; font-size: 0.95rem; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+
+        .book-title-cell { font-weight: 600; max-width: 200px; }
+        .price-cell { font-weight: 600; color: var(--accent); white-space: nowrap; }
+        .low-stock { color: var(--danger); font-weight: 700; }
+        .low-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            background: #fef2f2; color: var(--danger); font-size: 0.78rem; font-weight: 700; margin-left: 4px;
+        }
+        .ok-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            background: #edf5f0; color: #3f614f; font-size: 0.78rem; font-weight: 700;
+        }
+
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 7px 14px; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; border: 1.5px solid transparent; font-family: inherit; transition: all 0.18s; text-decoration: none; }
+        .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-primary:hover { background: #9a6344; }
+        .btn-ghost { background: #fff; color: var(--accent); border-color: var(--accent); }
+        .btn-ghost:hover { background: #fdf0e8; }
+        .btn-danger { background: #fff; color: var(--danger); border-color: #f5c6c6; }
+        .btn-danger:hover { background: #fef2f2; }
+        .btn-lg { padding: 11px 22px; font-size: 0.97rem; border-radius: 12px; }
+        .action-btns { display: flex; gap: 8px; align-items: center; }
+
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 600; font-size: 0.95rem; text-decoration: none; margin-bottom: 20px; }
+        .back-link:hover { text-decoration: underline; }
+
+        @media (max-width: 900px) {
+            .stats-row { grid-template-columns: 1fr 1fr; }
+            thead th:nth-child(1), tbody td:nth-child(1) { display: none; }
+        }
+        @media (max-width: 600px) {
+            .stats-row { grid-template-columns: 1fr; }
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; }
+            tbody tr { margin-bottom: 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+            tbody td { border: none; padding: 10px 14px; }
+            .action-btns { flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Admin Navbar -->
+<nav class="admin-nav">
+    <div class="admin-nav-inner">
+        <a class="admin-brand" th:href="@{/admin/books}">⚙ ADMIN PANEL</a>
+        <div class="admin-nav-links">
+            <a th:href="@{/admin/books}" class="active"><i class="fa-solid fa-book icon"></i> Books</a>
+            <a th:href="@{/admin/analytics}">📊 Analytics</a>
+            <a th:href="@{/discount-codes/admin}">🏷 Discounts</a>
+            <a th:href="@{/books}">🌐 View Store</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <a class="back-link" th:href="@{/books}">← Back to Store</a>
+
+    <div class="page-header">
+        <h1>📚 Book Management</h1>
+        <a th:href="@{/admin/books/create}" class="btn btn-primary btn-lg">+ Add New Book</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="label">Total Books</div>
+            <div class="value" th:text="${#lists.size(books)}">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Low Stock (≤5)</div>
+            <div class="value" style="color:#b91c1c;" th:text="${lowStockCount}">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Out of Stock</div>
+            <div class="value" style="color:#b91c1c;" th:text="${outOfStockCount}">0</div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="book : ${books}">
+                <td th:text="${book.id}" style="color:var(--muted); font-size:0.88rem;"></td>
+                <td class="book-title-cell" th:text="${book.title}"></td>
+                <td th:text="${book.author}" style="color:var(--muted);"></td>
+                <td th:text="${book.category.name}"></td>
+                <td class="price-cell" th:text="${#numbers.formatDecimal(book.price,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                <td>
+                    <span th:if="${book.stock > 5}" class="ok-badge" th:text="${book.stock}"></span>
+                    <span th:if="${book.stock <= 5}" class="low-stock" th:text="${book.stock}"></span>
+                    <span th:if="${book.stock <= 5}" class="low-badge">Low!</span>
+                </td>
+                <td>
+                    <div class="action-btns">
+                        <a th:href="@{'/admin/books/edit'(id=${book.id})}" class="btn btn-ghost"><i class="fa-solid fa-pencil"></i> Edit</a>
+                        <form th:action="@{/admin/books/delete}" method="post" style="margin:0;">
+                            <input type="hidden" name="id" th:value="${book.id}">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this book?')"><i class="fa-solid fa-trash"></i> Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+<script>
+if (window.location.search.includes('deleteError=1')) {
+    alert('Không thể xóa sách này vì đã có đơn hàng liên quan!');
+}
+</script>
+</html>
