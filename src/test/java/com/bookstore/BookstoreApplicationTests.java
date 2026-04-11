@@ -227,6 +227,7 @@ class BookstoreApplicationTests {
 				.with(user("user").roles("USER"))
 				.with(csrf())
 				.param("customerName", "Nguyen Van A")
+				.param("phoneNumber", "0901234567")
 				.param("address", "123 Duong ABC"))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/orders/success"));
@@ -273,7 +274,8 @@ class BookstoreApplicationTests {
 				.param("token", token.getToken())
 				.param("password", "newpass123")
 				.param("confirmPassword", "newpass123"))
-			.andExpect(status().isOk());
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login"));
 
 		PasswordResetToken updatedToken = passwordResetTokenRepository.findById(token.getId()).orElseThrow();
 		assertTrue(updatedToken.isUsed(), "Expected reset token marked as used");
@@ -304,6 +306,7 @@ class BookstoreApplicationTests {
 				.with(user("user").roles("USER"))
 				.with(csrf())
 				.param("customerName", "Order Test")
+				.param("phoneNumber", "0901234567")
 				.param("address", "1 Test Street"))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/orders/success"));

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import lombok.RequiredArgsConstructor;
 
 @Controller
@@ -96,7 +97,8 @@ public class HomeController {
 	public String handleResetPassword(
 			@Valid @ModelAttribute("resetPasswordRequest") ResetPasswordRequest request,
 			BindingResult bindingResult,
-			Model model) {
+			Model model,
+			RedirectAttributes redirectAttributes) {
 		if (bindingResult.hasErrors()) {
 			model.addAttribute("tokenValid", true);
 			return "auth/reset-password";
@@ -108,12 +110,13 @@ public class HomeController {
 			request.getConfirmPassword()
 		);
 
-		model.addAttribute("tokenValid", authService.isValidResetToken(request.getToken()));
 		if (response.isSuccess()) {
-			model.addAttribute("message", response.getMessage());
+			redirectAttributes.addFlashAttribute("message", "Password reset successful. Please login with your new password.");
+			return "redirect:/login";
 		} else {
+			model.addAttribute("tokenValid", authService.isValidResetToken(request.getToken()));
 			model.addAttribute("error", response.getMessage());
+			return "auth/reset-password";
 		}
-		return "auth/reset-password";
 	}
 }

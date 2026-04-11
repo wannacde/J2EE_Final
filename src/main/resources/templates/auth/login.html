@@ -69,6 +69,7 @@
 
     <div th:if="${param.error}" class="error-box">Invalid username or password. Please try again.</div>
     <div th:if="${param.logout}" class="success-box">You have been logged out successfully.</div>
+    <div th:if="${message}" class="success-box" th:text="${message}"></div>
 
     <form th:action="@{/login}" method="post">
         <div class="form-group">
